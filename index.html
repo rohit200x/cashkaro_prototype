@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CashKaro Link Rescue Prototype</title>
+    <style>
+        :root {
+            --primary: #E53935;
+            --primary-dark: #C62828;
+            --success: #2E7D32;
+            --warning: #E65100;
+            --bg: #FAFAFA;
+            --surface: #FFFFFF;
+            --text-primary: #212121;
+            --text-secondary: #616161;
+            --border: #E0E0E0;
+            --border-radius-card: 12px;
+            --border-radius-btn: 8px;
+            --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            --app-height: 100vh;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: #ECEFF1;
+            color: var(--text-primary);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Phone Frame */
+        #phone-frame {
+            width: 100%;
+            height: 100%;
+            max-width: 390px;
+            background-color: var(--bg);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        @media (min-width: 400px) {
+            #phone-frame {
+                height: 800px;
+                max-height: 95vh;
+                border-radius: 40px;
+                border: 12px solid #212121;
+            }
+        }
+
+        /* Screens */
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: var(--bg);
+            flex-direction: column;
+            overflow-y: auto;
+            overflow-x: hidden;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+        
+        @keyframes slideDownNotification {
+            0% { transform: translateY(-120%); opacity: 0; }
+            10% { transform: translateY(10px); opacity: 1; }
+            15% { transform: translateY(0); opacity: 1; }
+            90% { transform: translateY(0); opacity: 1; }
+            100% { transform: translateY(-120%); opacity: 0; }
+        }
+
+        /* Typography */
+        h1 { font-size: 24px; font-weight: 700; margin-bottom: 12px; color: var(--text-primary); }
+        h2 { font-size: 18px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); }
+        h3 { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+        p { font-size: 14px; line-height: 1.5; margin-bottom: 16px; color: var(--text-secondary); }
+        .text-center { text-align: center; }
+        .text-primary { color: var(--primary); }
+        
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: var(--border-radius-btn);
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            width: 100%;
+            text-decoration: none;
+        }
+        .btn:active { transform: scale(0.98); }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        .btn-primary:hover { background-color: var(--primary-dark); }
+        
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        /* Header */
+        .app-header {
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            background-color: var(--surface);
+            border-bottom: 1px solid var(--border);
+            z-index: 10;
+        }
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 8px;
+            margin-right: 8px;
+            margin-left: -8px;
+        }
+        .header-title {
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        /* Screen A: Landing */
+        #screen-landing { background-color: var(--surface); }
+        .hero {
+            padding: 40px 20px 20px;
+            text-align: center;
+            background: linear-gradient(135deg, #fff 0%, #ffebee 100%);
+        }
+        .logo-text { font-size: 28px; font-weight: 800; color: var(--primary); letter-spacing: -1px; margin-bottom: 8px; }
+        .hero-title { font-size: 24px; font-weight: 700; margin-bottom: 12px; }
+        .steps { padding: 20px; }
+        .step-item { display: flex; margin-bottom: 16px; align-items: flex-start; }
+        .step-number { 
+            background: var(--primary); color: white; width: 24px; height: 24px; 
+            border-radius: 12px; display: flex; align-items: center; justify-content: center; 
+            font-size: 12px; font-weight: bold; margin-right: 12px; flex-shrink: 0;
+        }
+        
+        .product-list { padding: 0 20px 20px; }
+        .product-card {
+            display: flex; align-items: center; padding: 12px; border: 1px solid var(--border);
+            border-radius: var(--border-radius-card); margin-bottom: 12px; cursor: pointer;
+            background: var(--surface); transition: border-color 0.2s;
+        }
+        .product-card:active { background-color: #f5f5f5; }
+        .product-icon { 
+            width: 48px; height: 48px; background: #eee; border-radius: 8px; 
+            display: flex; align-items: center; justify-content: center; font-size: 20px; margin-right: 12px;
+        }
+        .product-details { flex: 1; }
+        .product-name { font-weight: 600; font-size: 15px; margin-bottom: 2px; }
+        .product-store { font-size: 12px; color: var(--text-secondary); }
+        .product-cb { color: var(--success); font-weight: 600; font-size: 13px; margin-top: 4px; }
+        .share-btn-sim { 
+            background: #eee; border-radius: 20px; padding: 6px 12px; font-size: 12px; font-weight: 600; 
+        }
+
+        .disclaimer { font-size: 11px; text-align: center; color: #9e9e9e; padding: 20px; }
+
+        /* Screen B: Share Sheet Overlay */
+        #screen-share {
+            background-color: rgba(0,0,0,0.5);
+            justify-content: flex-end;
+            z-index: 100;
+        }
+        .share-sheet {
+            background: var(--surface);
+            border-radius: 24px 24px 0 0;
+            padding: 16px;
+            animation: slideUp 0.3s ease-out;
+        }
+        .handle-bar {
+            width: 40px; height: 4px; background: #E0E0E0; border-radius: 2px;
+            margin: 0 auto 16px;
+        }
+        .share-preview { display: flex; align-items: center; margin-bottom: 24px; padding: 0 8px; }
+        .share-preview-icon { width: 40px; height: 40px; background: #eee; border-radius: 8px; margin-right: 12px; }
+        .share-preview-text { flex: 1; overflow: hidden; }
+        .share-preview-title { font-size: 14px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+        .share-preview-url { font-size: 12px; color: var(--text-secondary); white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+        
+        .share-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 8px; margin-bottom: 24px; }
+        .share-app { display: flex; flex-direction: column; align-items: center; cursor: pointer; text-align: center; }
+        .share-app-icon {
+            width: 56px; height: 56px; border-radius: 16px; background: #f5f5f5;
+            display: flex; align-items: center; justify-content: center; font-size: 24px;
+            margin-bottom: 8px; position: relative;
+        }
+        .share-app-name { font-size: 11px; color: var(--text-secondary); }
+        .share-app.ck .share-app-icon { background: var(--primary); color: white; font-weight: bold; font-size: 16px; }
+        .share-app.ck .share-app-name { color: var(--text-primary); font-weight: 600; }
+        .badge-cb { 
+            position: absolute; top: -6px; right: -6px; background: var(--success); color: white;
+            font-size: 9px; font-weight: bold; padding: 2px 4px; border-radius: 4px; border: 2px solid white;
+        }
+
+        /* Screen C: Onboarding */
+        .onboarding-content { flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 32px 24px; text-align: center; }
+        .ob-illustration { width: 200px; height: 200px; background: #ffebee; border-radius: 50%; margin: 0 auto 32px; display: flex; align-items: center; justify-content: center; font-size: 80px; }
+        .ob-dots { display: flex; justify-content: center; margin: 24px 0; gap: 8px; }
+        .ob-dot { width: 8px; height: 8px; border-radius: 50%; background: #e0e0e0; }
+        .ob-dot.active { background: var(--primary); width: 24px; border-radius: 4px; }
+        .ob-actions { padding: 24px; padding-bottom: 40px; display: flex; gap: 12px; }
+
+        /* Screen D: Activation */
+        #screen-activation { background: #f5f5f5; }
+        .activation-content { padding: 16px; flex: 1; display: flex; flex-direction: column; }
+        .product-insight-card {
+            background: var(--surface); border-radius: var(--border-radius-card); padding: 20px;
+            margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); text-align: center;
+        }
+        .retailer-badge {
+            display: inline-flex; align-items: center; background: #e8f5e9; color: var(--success);
+            font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 12px; margin-bottom: 16px;
+        }
+        .retailer-logo-lg { font-size: 32px; margin-bottom: 8px; }
+        .insight-title { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
+        .insight-price { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+        .cashback-box {
+            background: #fff8e1; border: 1px dashed #ffb300; border-radius: 8px; padding: 12px;
+            display: inline-block; width: 100%;
+        }
+        .cb-label { font-size: 12px; color: #f57c00; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+        .cb-amount { font-size: 24px; font-weight: 800; color: #e65100; }
+        
+        .reassurance-list { margin-bottom: 32px; background: white; border-radius: 12px; padding: 16px; }
+        .reassurance-item { display: flex; align-items: flex-start; margin-bottom: 12px; font-size: 14px; }
+        .reassurance-item:last-child { margin-bottom: 0; }
+        .r-icon { color: var(--success); margin-right: 12px; font-size: 16px; }
+        .r-icon.info { color: var(--text-secondary); }
+        .r-text { color: var(--text-primary); }
+        .r-subtext { font-size: 12px; color: var(--text-secondary); display: block; margin-top: 2px;}
+        
+        .warning-box {
+            background: #fff3e0; border-left: 4px solid var(--warning); padding: 12px;
+            border-radius: 4px; margin-bottom: 24px; font-size: 13px; color: #bf360c; display: none;
+        }
+
+        .activation-footer { padding: 16px 16px 32px; background: white; border-top: 1px solid var(--border); }
+        .terms-link { text-align: center; font-size: 12px; color: var(--text-secondary); margin-top: 16px; text-decoration: underline; }
+
+        /* Screen E: Activation Confirmation */
+        #screen-confirmation { background: var(--primary); color: white; justify-content: center; align-items: center; text-align: center; padding: 32px; }
+        .success-circle {
+            width: 80px; height: 80px; background: white; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; margin: 0 auto 24px;
+        }
+        .success-check { color: var(--primary); font-size: 40px; font-weight: bold; }
+        #screen-confirmation h2 { color: white; font-size: 24px; margin-bottom: 12px; }
+        #screen-confirmation p { color: rgba(255,255,255,0.9); font-size: 16px; margin-bottom: 32px; }
+        
+        .fallback-link { font-size: 13px; color: rgba(255,255,255,0.7); text-decoration: underline; cursor: pointer; margin-top: 40px; }
+
+        /* Deep-Link Fallback Modal */
+        #fallback-modal {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6);
+            display: none; justify-content: center; align-items: center; z-index: 200; padding: 24px;
+        }
+        .fallback-content { background: white; padding: 24px; border-radius: 16px; text-align: center; }
+
+        /* Screen F: Simulated Retailer */
+        .mock-retailer-header { padding: 12px 16px; background: white; border-bottom: 1px solid #eee; display: flex; align-items: center; }
+        .mock-logo { font-weight: bold; font-size: 18px; }
+        
+        .ck-tracking-bar {
+            background: #e8f5e9; color: var(--success); padding: 8px 16px; font-size: 12px;
+            font-weight: 600; display: flex; align-items: center; justify-content: space-between;
+        }
+        
+        .mock-product-img { height: 250px; background: #f5f5f5; display: flex; align-items: center; justify-content: center; font-size: 48px; }
+        .mock-product-details { padding: 16px; }
+        .mock-title { font-size: 16px; margin-bottom: 8px; }
+        .mock-price { font-size: 20px; font-weight: bold; margin-bottom: 16px; }
+        
+        .bottom-bar { position: absolute; bottom: 0; left: 0; right: 0; padding: 16px; background: white; border-top: 1px solid #eee; }
+        
+        /* Screen G: Purchase Complete */
+        #screen-purchase { align-items: center; justify-content: center; background: white; }
+        
+        .notification-preview {
+            position: absolute; top: 20px; left: 16px; right: 16px; background: white; border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15); padding: 16px; display: none; z-index: 300;
+            border-left: 4px solid var(--primary);
+        }
+        .notification-preview.show { display: block; animation: slideDownNotification 6s forwards; }
+        .notif-header { display: flex; align-items: center; margin-bottom: 8px; font-size: 12px; color: var(--text-secondary); }
+        .notif-icon { width: 16px; height: 16px; background: var(--primary); border-radius: 4px; margin-right: 8px; display: inline-block; }
+        .notif-title { font-weight: 600; color: var(--text-primary); margin-bottom: 4px; font-size: 14px; }
+        .notif-body { font-size: 13px; line-height: 1.4; }
+
+        /* Screen H: Paste Link */
+        .paste-content { padding: 24px; }
+        .input-group { margin-bottom: 24px; }
+        .url-input {
+            width: 100%; padding: 16px; border: 1px solid var(--border); border-radius: 8px;
+            font-size: 16px; margin-bottom: 12px; font-family: inherit;
+        }
+        .suggestion-chip {
+            display: inline-block; padding: 8px 12px; background: #eee; border-radius: 16px;
+            font-size: 12px; margin-right: 8px; margin-bottom: 8px; cursor: pointer; color: var(--text-secondary);
+        }
+
+        /* Screen I: Unsupported */
+        #screen-unsupported { justify-content: center; align-items: center; text-align: center; padding: 24px; }
+        .sad-icon { font-size: 64px; margin-bottom: 24px; }
+        .vote-count { font-size: 12px; color: var(--text-secondary); margin-top: 12px; }
+
+    </style>
+</head>
+<body>
+
+<div id="phone-frame">
+    
+    <!-- SCREEN A: LANDING -->
+    <div id="screen-landing" class="screen active">
+        <div class="hero">
+            <div class="logo-text">CashKaro</div>
+            <h1 class="hero-title">Link Rescue</h1>
+            <p>Activate cashback without restarting your shopping journey.</p>
+        </div>
+        
+        <div class="steps">
+            <h3>How it works</h3>
+            <div class="step-item">
+                <div class="step-number">1</div>
+                <div><p style="margin:0">Browse on your favorite retailer app</p></div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">2</div>
+                <div><p style="margin:0">Tap Share and select CashKaro</p></div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">3</div>
+                <div><p style="margin:0">Activate cashback in one tap</p></div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">4</div>
+                <div><p style="margin:0">We send you back to complete your purchase</p></div>
+            </div>
+        </div>
+
+        <div class="product-list">
+            <h3>Try it out (Tap to share)</h3>
+            
+            <div class="product-card" onclick="openShareSheet('myntra')">
+                <div class="product-icon">👟</div>
+                <div class="product-details">
+                    <div class="product-name">Nike Running Shoes</div>
+                    <div class="product-store">Myntra • ₹12,995</div>
+                    <div class="product-cb">8% Cashback (₹1,039)</div>
+                </div>
+                <div class="share-btn-sim">Share</div>
+            </div>
+            
+            <div class="product-card" onclick="openShareSheet('amazon')">
+                <div class="product-icon">📱</div>
+                <div class="product-details">
+                    <div class="product-name">Samsung Galaxy M34</div>
+                    <div class="product-store">Amazon • ₹29,999</div>
+                    <div class="product-cb">1.5% Rewards (₹450)</div>
+                </div>
+                <div class="share-btn-sim">Share</div>
+            </div>
+            
+            <div class="product-card" onclick="openShareSheet('nykaa')">
+                <div class="product-icon">💄</div>
+                <div class="product-details">
+                    <div class="product-name">MAC Matte Lipstick</div>
+                    <div class="product-store">Nykaa • ₹1,950</div>
+                    <div class="product-cb">10% Cashback (₹195)</div>
+                </div>
+                <div class="share-btn-sim">Share</div>
+            </div>
+            
+            <div class="product-card" onclick="openShareSheet('amazon_gc')">
+                <div class="product-icon">🎁</div>
+                <div class="product-details">
+                    <div class="product-name">Amazon Pay Gift Card</div>
+                    <div class="product-store">Amazon • ₹500</div>
+                    <div class="product-cb">Category Warning Demo</div>
+                </div>
+                <div class="share-btn-sim">Share</div>
+            </div>
+
+            <div class="product-card" onclick="openShareSheet('ikea')">
+                <div class="product-icon">🪑</div>
+                <div class="product-details">
+                    <div class="product-name">MICKE Desk, white</div>
+                    <div class="product-store">IKEA • ₹4,990</div>
+                    <div class="product-cb" style="color:var(--text-secondary)">Unsupported Store Demo</div>
+                </div>
+                <div class="share-btn-sim">Share</div>
+            </div>
+
+            <div style="margin-top: 24px;">
+                <button class="btn btn-outline" onclick="showScreen('screen-paste')">Try "Paste a Link" instead</button>
+            </div>
+        </div>
+        
+        <div class="disclaimer">Prototype: Android Share Sheet is simulated for demonstration.</div>
+    </div>
+
+    <!-- SCREEN B: SHARE SHEET -->
+    <div id="screen-share" class="screen">
+        <div style="flex:1" onclick="closeShareSheet()"></div> <!-- Tap to dismiss -->
+        <div class="share-sheet">
+            <div class="handle-bar"></div>
+            <div class="share-preview">
+                <div class="share-preview-icon" id="ss-icon">👟</div>
+                <div class="share-preview-text">
+                    <div class="share-preview-title" id="ss-title">Nike Running Shoes</div>
+                    <div class="share-preview-url" id="ss-url">https://myntra.com/shoes/...</div>
+                </div>
+            </div>
+            <div class="share-grid">
+                <div class="share-app ck" onclick="proceedFromShare()">
+                    <div class="share-app-icon">CK<div class="badge-cb">₹ BACK</div></div>
+                    <div class="share-app-name">CashKaro</div>
+                </div>
+                <div class="share-app" onclick="closeShareSheet()">
+                    <div class="share-app-icon">WA</div>
+                    <div class="share-app-name">WhatsApp</div>
+                </div>
+                <div class="share-app" onclick="closeShareSheet()">
+                    <div class="share-app-icon">IG</div>
+                    <div class="share-app-name">Instagram</div>
+                </div>
+                <div class="share-app" onclick="closeShareSheet()">
+                    <div class="share-app-icon">📋</div>
+                    <div class="share-app-name">Copy</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN C: ONBOARDING -->
+    <div id="screen-onboarding" class="screen">
+        <div class="app-header">
+            <button class="back-btn" onclick="showScreen('screen-landing')">✕</button>
+            <div class="header-title">Link Rescue</div>
+        </div>
+        
+        <!-- OB Step 1 -->
+        <div id="ob-1" style="display:flex; flex-direction:column; flex:1;">
+            <div class="onboarding-content">
+                <div class="ob-illustration">🔗</div>
+                <h2>Introducing Link Rescue</h2>
+                <p>Found a great product on a shopping app? Don't miss out on your cashback.</p>
+                <p>Just share the product link to CashKaro to activate your savings instantly.</p>
+            </div>
+            <div class="ob-dots">
+                <div class="ob-dot active"></div>
+                <div class="ob-dot"></div>
+            </div>
+            <div class="ob-actions">
+                <button class="btn btn-primary" onclick="nextOnboarding()">Next</button>
+            </div>
+        </div>
+
+        <!-- OB Step 2 -->
+        <div id="ob-2" style="display:none; flex-direction:column; flex:1;">
+            <div class="onboarding-content">
+                <div class="ob-illustration">🛍️</div>
+                <h2>Same product. Extra savings.</h2>
+                <p>We'll track your cashback and send you right back to the product you were viewing.</p>
+                <p>Designed to add only a few seconds to your shopping journey.</p>
+            </div>
+            <div class="ob-dots">
+                <div class="ob-dot"></div>
+                <div class="ob-dot active"></div>
+            </div>
+            <div class="ob-actions">
+                <button class="btn btn-primary" onclick="finishOnboarding()">Got it, let's go</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN D: ACTIVATION -->
+    <div id="screen-activation" class="screen">
+        <div class="app-header">
+            <button class="back-btn" onclick="showScreen('screen-landing')">←</button>
+            <div class="header-title">Link Rescue</div>
+        </div>
+        
+        <div class="activation-content">
+            <div class="product-insight-card">
+                <div class="retailer-badge">✓ Verified Partner</div>
+                <div class="retailer-logo-lg" id="act-icon">👟</div>
+                <div class="insight-title" id="act-title">Nike Running Shoes</div>
+                <div class="insight-price" id="act-price">₹12,995</div>
+                
+                <div class="cashback-box">
+                    <div class="cb-label">You'll Earn</div>
+                    <div class="cb-amount" id="act-cb">8% Cashback</div>
+                </div>
+            </div>
+
+            <div class="warning-box" id="act-warning">
+                ⚠️ This product category (Gift Cards) is typically excluded from rewards on Amazon. You can still activate — it will apply if the category is eligible.
+            </div>
+
+            <div class="reassurance-list">
+                <div class="reassurance-item">
+                    <div class="r-icon">✓</div>
+                    <div class="r-text">Return to the product you were viewing</div>
+                </div>
+                <div class="reassurance-item">
+                    <div class="r-icon">✓</div>
+                    <div class="r-text">Cashback tracks automatically after purchase</div>
+                </div>
+                <div class="reassurance-item">
+                    <div class="r-icon">✓</div>
+                    <div class="r-text">No need to search or start over</div>
+                </div>
+                <div class="reassurance-item" style="margin-top: 16px;">
+                    <div class="r-icon info">ⓘ</div>
+                    <div class="r-text"><span class="r-subtext">Cart behaviour may vary by retailer</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="activation-footer">
+            <button class="btn btn-primary" onclick="activateCashback()">Activate Cashback & Continue Shopping</button>
+            <div class="terms-link">Terms & Conditions apply</div>
+        </div>
+    </div>
+
+    <!-- SCREEN E: CONFIRMATION TRANSITION -->
+    <div id="screen-confirmation" class="screen">
+        <div class="success-circle">
+            <div class="success-check">✓</div>
+        </div>
+        <h2>Cashback Session Active!</h2>
+        <p>Returning you to <span id="conf-retailer">Myntra</span> in a moment...</p>
+        <p style="font-size: 13px; opacity: 0.8;">Complete your purchase normally. We'll track it automatically.</p>
+        
+        <button class="btn btn-outline" style="color:white; border-color:white; margin-top:20px; width:auto; padding: 10px 20px;" onclick="goToRetailer()">Return to <span id="conf-retailer-btn">Myntra</span> →</button>
+        
+        <div class="fallback-link" onclick="document.getElementById('fallback-modal').style.display='flex'">What if the app doesn't open?</div>
+    </div>
+
+    <!-- Fallback Modal -->
+    <div id="fallback-modal" onclick="this.style.display='none'">
+        <div class="fallback-content" onclick="event.stopPropagation()">
+            <h3>App didn't open?</h3>
+            <p style="margin-top:12px; font-size:14px; text-align:left;">If the retailer app doesn't open automatically, we'll open it in your mobile browser instead. Your cashback session remains active and will track normally.</p>
+            <button class="btn btn-primary" style="margin-top:16px;" onclick="document.getElementById('fallback-modal').style.display='none'">Got it</button>
+        </div>
+    </div>
+
+    <!-- SCREEN F: SIMULATED RETAILER -->
+    <div id="screen-retailer" class="screen">
+        <div class="ck-tracking-bar">
+            <span>CashKaro tracking active</span>
+            <span id="ret-cb-badge">8% CB</span>
+        </div>
+        <div class="mock-retailer-header">
+            <span class="back-btn" style="font-size:16px; margin-right:16px;" onclick="showScreen('screen-landing')">← Demo</span>
+            <div class="mock-logo" id="ret-logo">Myntra</div>
+        </div>
+        
+        <div class="mock-product-img" id="ret-img">👟</div>
+        <div class="mock-product-details">
+            <h2 class="mock-title" id="ret-title">Nike Running Shoes</h2>
+            <div class="mock-price" id="ret-price">₹12,995</div>
+            <p>Product details placeholder. This represents the retailer's actual app page.</p>
+        </div>
+        
+        <div class="bottom-bar">
+            <button class="btn" style="background:#ff3f6c; color:white;" onclick="simulatePurchase()">Buy Now</button>
+        </div>
+    </div>
+
+    <!-- SCREEN G: PURCHASE COMPLETE -->
+    <div id="screen-purchase" class="screen">
+        <div class="mock-retailer-header" style="position:absolute; top:0; width:100%;">
+            <div class="mock-logo" id="pur-logo">Myntra</div>
+        </div>
+        
+        <div class="text-center" style="padding: 24px;">
+            <div style="font-size:64px; margin-bottom:16px;">🎉</div>
+            <h2>Order Confirmed!</h2>
+            <p>Your order has been placed successfully on the retailer app.</p>
+            <button class="btn btn-outline" style="margin-top:24px;" onclick="showScreen('screen-landing')">Back to Demo Home</button>
+        </div>
+
+        <div class="notification-preview" id="push-notification">
+            <div class="notif-header">
+                <div class="notif-icon"></div>
+                CashKaro • Just now
+            </div>
+            <div class="notif-title">Purchase detected!</div>
+            <div class="notif-body">₹<span id="notif-amount">1,039</span> cashback is now pending on your <span id="notif-retailer">Myntra</span> order. Confirmation expected in ~45 days.</div>
+        </div>
+    </div>
+
+    <!-- SCREEN H: PASTE LINK -->
+    <div id="screen-paste" class="screen">
+        <div class="app-header">
+            <button class="back-btn" onclick="showScreen('screen-landing')">←</button>
+            <div class="header-title">Paste Link</div>
+        </div>
+        
+        <div class="paste-content">
+            <div class="input-group">
+                <label style="display:block; font-weight:600; margin-bottom:8px; font-size:14px;">Paste a product link from any retailer</label>
+                <input type="url" class="url-input" id="paste-input" placeholder="https://..." oninput="checkPaste()">
+                <button class="btn btn-primary" id="paste-btn" disabled onclick="processPaste()">Activate Cashback</button>
+            </div>
+            
+            <div>
+                <p style="font-size:13px; font-weight:600; color:var(--text-primary); margin-bottom:8px;">Try these examples:</p>
+                <div class="suggestion-chip" onclick="fillPaste('https://www.myntra.com/shoes/nike/123')">Myntra Link</div>
+                <div class="suggestion-chip" onclick="fillPaste('https://www.amazon.in/dp/B0C74')">Amazon Link</div>
+                <div class="suggestion-chip" onclick="fillPaste('https://www.nykaa.com/mac/p/456')">Nykaa Link</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREEN I: UNSUPPORTED -->
+    <div id="screen-unsupported" class="screen">
+        <div class="sad-icon">🏬</div>
+        <h2>IKEA isn't on CashKaro yet</h2>
+        <p>We currently don't offer cashback for this retailer via Link Rescue.</p>
+        
+        <button class="btn btn-primary" style="margin-top:16px;" onclick="showScreen('screen-landing')">Vote to add this store</button>
+        <div class="vote-count">342 users have requested this</div>
+        
+        <button class="btn btn-outline" style="margin-top:24px;" onclick="showScreen('screen-landing')">Back to Demo</button>
+    </div>
+
+</div>
+
+<script>
+    // --- Data ---
+    const products = {
+        'myntra': {
+            id: 'myntra',
+            retailer: 'Myntra',
+            name: 'Nike Running Shoes',
+            price: '₹12,995',
+            cbText: '8% Cashback',
+            cbValue: '1,039',
+            icon: '👟',
+            url: 'https://myntra.com/shoes/nike/123',
+            color: '#ff3f6c',
+            isWarning: false
+        },
+        'amazon': {
+            id: 'amazon',
+            retailer: 'Amazon',
+            name: 'Samsung Galaxy M34',
+            price: '₹29,999',
+            cbText: '1.5% Rewards',
+            cbValue: '450',
+            icon: '📱',
+            url: 'https://amazon.in/dp/B0C74',
+            color: '#ff9900',
+            isWarning: false
+        },
+        'nykaa': {
+            id: 'nykaa',
+            retailer: 'Nykaa',
+            name: 'MAC Matte Lipstick',
+            price: '₹1,950',
+            cbText: '10% Cashback',
+            cbValue: '195',
+            icon: '💄',
+            url: 'https://nykaa.com/mac/p/456',
+            color: '#fc2779',
+            isWarning: false
+        },
+        'amazon_gc': {
+            id: 'amazon_gc',
+            retailer: 'Amazon',
+            name: 'Amazon Pay Gift Card',
+            price: '₹500',
+            cbText: 'Up to 1.5% Rewards',
+            cbValue: '7.5',
+            icon: '🎁',
+            url: 'https://amazon.in/dp/GIFT',
+            color: '#ff9900',
+            isWarning: true
+        },
+        'ikea': {
+            id: 'ikea',
+            retailer: 'IKEA',
+            name: 'MICKE Desk',
+            url: 'https://ikea.in/micke'
+        }
+    };
+
+    let currentProduct = null;
+    let hasSeenOnboarding = false;
+    let autoTransitionTimer = null;
+
+    // --- Navigation ---
+    function showScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+        clearTimeout(autoTransitionTimer);
+    }
+
+    // --- Share Flow ---
+    function openShareSheet(productId) {
+        currentProduct = products[productId];
+        
+        // Populate share sheet
+        document.getElementById('ss-icon').innerText = currentProduct.icon || '🛍️';
+        document.getElementById('ss-title').innerText = currentProduct.name;
+        document.getElementById('ss-url').innerText = currentProduct.url;
+        
+        document.getElementById('screen-share').classList.add('active');
+    }
+
+    function closeShareSheet() {
+        document.getElementById('screen-share').classList.remove('active');
+    }
+
+    function proceedFromShare() {
+        closeShareSheet();
+        
+        if (currentProduct.id === 'ikea') {
+            showScreen('screen-unsupported');
+            return;
+        }
+
+        if (!hasSeenOnboarding) {
+            showScreen('screen-onboarding');
+            document.getElementById('ob-1').style.display = 'flex';
+            document.getElementById('ob-2').style.display = 'none';
+        } else {
+            prepActivationScreen();
+        }
+    }
+
+    // --- Onboarding Flow ---
+    function nextOnboarding() {
+        document.getElementById('ob-1').style.display = 'none';
+        document.getElementById('ob-2').style.display = 'flex';
+    }
+
+    function finishOnboarding() {
+        hasSeenOnboarding = true;
+        prepActivationScreen();
+    }
+
+    // --- Activation Flow ---
+    function prepActivationScreen() {
+        // Populate Activation Screen
+        document.getElementById('act-icon').innerText = currentProduct.icon;
+        document.getElementById('act-title').innerText = currentProduct.name;
+        document.getElementById('act-price').innerText = currentProduct.price;
+        document.getElementById('act-cb').innerText = currentProduct.cbText;
+        
+        const warningBox = document.getElementById('act-warning');
+        if (currentProduct.isWarning) {
+            warningBox.style.display = 'block';
+        } else {
+            warningBox.style.display = 'none';
+        }
+
+        showScreen('screen-activation');
+    }
+
+    function activateCashback() {
+        // Populate Confirmation
+        document.getElementById('conf-retailer').innerText = currentProduct.retailer;
+        document.getElementById('conf-retailer-btn').innerText = currentProduct.retailer;
+        
+        showScreen('screen-confirmation');
+        
+        // Auto transition after 2 seconds
+        autoTransitionTimer = setTimeout(() => {
+            goToRetailer();
+        }, 2000);
+    }
+
+    // --- Retailer Simulation Flow ---
+    function goToRetailer() {
+        clearTimeout(autoTransitionTimer);
+        
+        // Populate Retailer Screen
+        document.getElementById('ret-logo').innerText = currentProduct.retailer;
+        document.getElementById('ret-logo').style.color = currentProduct.color;
+        document.getElementById('ret-img').innerText = currentProduct.icon;
+        document.getElementById('ret-title').innerText = currentProduct.name;
+        document.getElementById('ret-price').innerText = currentProduct.price;
+        document.getElementById('ret-cb-badge').innerText = currentProduct.cbText;
+        
+        // Update button color
+        document.querySelector('#screen-retailer .btn').style.backgroundColor = currentProduct.color;
+
+        showScreen('screen-retailer');
+    }
+
+    function simulatePurchase() {
+        document.getElementById('pur-logo').innerText = currentProduct.retailer;
+        document.getElementById('pur-logo').style.color = currentProduct.color;
+        
+        showScreen('screen-purchase');
+        
+        // Reset notification
+        const notif = document.getElementById('push-notification');
+        notif.classList.remove('show');
+        
+        // Trigger notification after 2 seconds
+        setTimeout(() => {
+            document.getElementById('notif-amount').innerText = currentProduct.cbValue;
+            document.getElementById('notif-retailer').innerText = currentProduct.retailer;
+            
+            // Force reflow
+            void notif.offsetWidth;
+            notif.classList.add('show');
+        }, 2000);
+    }
+
+    // --- Paste Flow ---
+    function fillPaste(url) {
+        const input = document.getElementById('paste-input');
+        input.value = url;
+        checkPaste();
+    }
+
+    function checkPaste() {
+        const val = document.getElementById('paste-input').value.toLowerCase();
+        const btn = document.getElementById('paste-btn');
+        btn.disabled = val.length < 5;
+    }
+
+    function processPaste() {
+        const val = document.getElementById('paste-input').value.toLowerCase();
+        
+        if (val.includes('myntra')) currentProduct = products['myntra'];
+        else if (val.includes('amazon')) currentProduct = products['amazon'];
+        else if (val.includes('nykaa')) currentProduct = products['nykaa'];
+        else currentProduct = products['myntra']; // fallback
+        
+        prepActivationScreen();
+    }
+
+</script>
+</body>
+</html>
